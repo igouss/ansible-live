@@ -1,0 +1,17 @@
+[project]
+name = "ansible-live"
+version = "0.0.0"
+description = "Watch a running ansible-playbook from a Claude Code pane."
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = ["ansible-core>=2.21,<2.22", "jsonschema>=4.23", "pytest>=8"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["contract/tests"]
+pythonpath = ["contract"]

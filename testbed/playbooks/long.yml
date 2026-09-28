@@ -1,0 +1,12 @@
+# As many tasks as `steps` asks for, to watch a long run and to measure a big one.
+- name: Many steps
+  hosts: web:db
+  gather_facts: false
+  vars:
+    steps: 60
+  tasks:
+    - name: Take the steps
+      ansible.builtin.include_tasks: tasks/step.yml
+      loop: "{{ range(1, steps | int + 1) | list }}"
+      loop_control:
+        loop_var: step

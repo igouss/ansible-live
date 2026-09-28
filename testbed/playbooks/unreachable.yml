@@ -1,0 +1,7 @@
+# A host nothing answers for, among hosts that are fine; the run fails.
+- name: Web tier and a ghost
+  hosts: web:ghosts
+  tasks:
+    - name: Report the uptime
+      ansible.builtin.command: sleep {{ pace }}
+      changed_when: false

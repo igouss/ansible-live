@@ -1,0 +1,21 @@
+# Every host but the ghosts is this machine under another name, so a play has a fleet to fan out over.
+all:
+  vars:
+    pace: 1  # seconds each step takes, so a run can be watched
+    ansible_connection: local
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  children:
+    web:
+      hosts:
+        web1:
+        web2:
+        web3:
+    db:
+      hosts:
+        db1:
+    ghosts:
+      hosts:
+        ghost1:
+          ansible_connection: ssh
+          ansible_host: 192.0.2.10  # TEST-NET-1 (RFC 5737): nothing answers
+          ansible_ssh_common_args: -o ConnectTimeout=2

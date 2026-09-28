@@ -1,0 +1,22 @@
+{"v":1,"run":"20260928T142821Z-4242","seq":0,"at":"2026-09-28T14:28:21.000Z","type":"run.start","pid":4242,"controller":"fedora","ansible":"2.21.1","check":false,"limit":null,"extra_vars":["pace"]}
+{"v":1,"run":"20260928T142821Z-4242","seq":1,"at":"2026-09-28T14:28:21.100Z","type":"playbook.start","playbook":"/home/op/site/playbooks/clean.yml"}
+{"v":1,"run":"20260928T142821Z-4242","seq":2,"at":"2026-09-28T14:28:21.200Z","type":"play.start","play":"p-1","name":"Web tier","hosts":["web1","web2"]}
+{"v":1,"run":"20260928T142821Z-4242","seq":3,"at":"2026-09-28T14:28:21.300Z","type":"task.start","task":"t-1","name":"Write the site config","play":"p-1","handler":false}
+{"v":1,"run":"20260928T142821Z-4242","seq":4,"at":"2026-09-28T14:28:21.400Z","type":"host.start","task":"t-1","host":"web1"}
+{"v":1,"run":"20260928T142821Z-4242","seq":5,"at":"2026-09-28T14:28:21.500Z","type":"host.start","task":"t-1","host":"web2"}
+{"v":1,"run":"20260928T142821Z-4242","seq":6,"at":"2026-09-28T14:28:21.600Z","type":"host.result","task":"t-1","host":"web1","outcome":"ok","changed":true,"message":null}
+{"v":1,"run":"20260928T142821Z-4242","seq":7,"at":"2026-09-28T14:28:21.700Z","type":"host.result","task":"t-1","host":"web2","outcome":"ok","changed":true,"message":null}
+{"v":1,"run":"20260928T142821Z-4242","seq":8,"at":"2026-09-28T14:28:21.800Z","type":"task.start","task":"t-2","name":"Migrate a schema no web host has","play":"p-1","handler":false}
+{"v":1,"run":"20260928T142821Z-4242","seq":9,"at":"2026-09-28T14:28:21.900Z","type":"host.start","task":"t-2","host":"web1"}
+{"v":1,"run":"20260928T142821Z-4242","seq":10,"at":"2026-09-28T14:28:22.000Z","type":"host.start","task":"t-2","host":"web2"}
+{"v":1,"run":"20260928T142821Z-4242","seq":11,"at":"2026-09-28T14:28:22.100Z","type":"host.result","task":"t-2","host":"web1","outcome":"skipped","changed":false,"message":"Conditional result was False"}
+{"v":1,"run":"20260928T142821Z-4242","seq":12,"at":"2026-09-28T14:28:22.200Z","type":"host.result","task":"t-2","host":"web2","outcome":"skipped","changed":false,"message":"Conditional result was False"}
+{"v":1,"run":"20260928T142821Z-4242","seq":13,"at":"2026-09-28T14:28:22.300Z","type":"task.start","task":"t-3","name":"Reload the site","play":"p-1","handler":true}
+{"v":1,"run":"20260928T142821Z-4242","seq":14,"at":"2026-09-28T14:28:22.400Z","type":"host.start","task":"t-3","host":"web1"}
+{"v":1,"run":"20260928T142821Z-4242","seq":15,"at":"2026-09-28T14:28:22.500Z","type":"host.start","task":"t-3","host":"web2"}
+{"v":1,"run":"20260928T142821Z-4242","seq":16,"at":"2026-09-28T14:28:22.600Z","type":"host.result","task":"t-3","host":"web1","outcome":"ok","changed":true,"message":null}
+{"v":1,"run":"20260928T142821Z-4242","seq":17,"at":"2026-09-28T14:28:22.700Z","type":"host.result","task":"t-3","host":"web2","outcome":"ok","changed":true,"message":null}
+{"v":1,"run":"20260928T142821Z-4242","seq":18,"at":"2026-09-28T14:28:22.800Z","type":"playbook.end","outcome":"ok","hosts":{"web1":{"ok":2,"changed":1,"failed":0,"unreachable":0,"skipped":1,"rescued":0,"ignored":0},"web2":{"ok":2,"changed":1,"failed":0,"unreachable":0,"skipped":1,"rescued":0,"ignored":0}}}
+{"v":1,"run":"20260928T142821Z-4242","seq":19,"at":"2026-09-28T14:28:22.900Z","type":"run.end","outcome":"ok"}
+{"v":1,"run":"20260928T142821Z-4242","seq":20,"at":"2026-09-28T14:28:21.500Z","type":"host.start","task":"t-1","host":"web2"}
+{"v":1,"run":"20260928T142821Z-4242","seq":21,"at":"2026-09-28T14:28:21.600Z","type":"host.result","task":"t-1","host":"web1","outcome":"ok","changed":true,"message":null}

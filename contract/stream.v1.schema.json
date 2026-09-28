@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/igouss/ansible-live/contract/stream.v1.schema.json",
+  "title": "A line the ansible-live follower emits (contract v1, SPEC.md FR-12, FR-14)",
+  "oneOf": [
+    {
+      "$ref": "recorder.v1.schema.json"
+    },
+    {
+      "$ref": "#/$defs/run.lost"
+    }
+  ],
+  "$defs": {
+    "run.lost": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "v": {
+          "const": 1
+        },
+        "type": {
+          "const": "run.lost"
+        },
+        "run": {
+          "$ref": "recorder.v1.schema.json#/$defs/run"
+        },
+        "at": {
+          "$ref": "recorder.v1.schema.json#/$defs/at"
+        }
+      },
+      "required": [
+        "v",
+        "type",
+        "run",
+        "at"
+      ]
+    }
+  }
+}

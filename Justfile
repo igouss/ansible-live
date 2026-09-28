@@ -1,0 +1,32 @@
+# Every check that runs offline: the contract, its model, the testbed.
+verify: test formal testbed
+
+# The unit and contract tests.
+test:
+    uv run --locked pytest -q
+
+# The follower protocol model-checked, and the end-first order it replaces seen failing.
+formal:
+    #!/usr/bin/env bash
+    cd contract/formal
+    tlc -workers 1 -config Follow.cfg Follow >/dev/null || { echo "Follow: the protocol fails its model"; exit 1; }
+    tlc -workers 1 -config FollowNaive.cfg FollowNaive | grep -q "Invariant LostSound is violated" \
+        || { echo "FollowNaive: the end-first order no longer fails LostSound"; exit 1; }
+
+# Run one testbed playbook, extra arguments passed on: `just play long -e steps=500 -e pace=0`.
+play name *args:
+    cd testbed && uv run --locked ansible-playbook playbooks/{{name}}.yml {{args}}
+
+# Every testbed playbook at full speed, each required to end the way it is built to.
+testbed:
+    just _ends clean 0
+    just _ends clean 0 --check
+    just _ends failing 2
+    just _ends unreachable 4
+    just _ends long 0 -e steps=3
+
+_ends name code *args:
+    #!/usr/bin/env bash
+    said=$(just play {{name}} -e pace=0 {{args}} </dev/null 2>&1)
+    got=$?
+    [ "$got" = "{{code}}" ] || { echo "$said"; echo "{{name}} {{args}}: exit $got, expected {{code}}"; exit 1; }

@@ -1,0 +1,50 @@
+# Two plays that end well: ok, changed, skipped, a loop and a handler. `pace` is each step's seconds.
+- name: Web tier
+  hosts: web
+  vars:
+    home: "{{ playbook_dir }}/../.state/{{ inventory_hostname }}"
+  tasks:
+    - name: Start from nothing
+      ansible.builtin.file:
+        path: "{{ home }}"
+        state: absent
+
+    - name: Make the host's home
+      ansible.builtin.file:
+        path: "{{ home }}"
+        state: directory
+        mode: "0755"
+
+    - name: Write the site config
+      ansible.builtin.copy:
+        dest: "{{ home }}/site.conf"
+        content: "listen {{ 8080 + groups['web'].index(inventory_hostname) }}\n"
+        mode: "0644"
+      notify: Reload the site
+
+    - name: Warm each cache
+      ansible.builtin.command: sleep {{ pace }}
+      loop: [pages, images, fonts]
+      changed_when: false
+
+    - name: Migrate a schema no web host has
+      ansible.builtin.debug:
+        msg: never
+      when: "'db' in group_names"
+
+  handlers:
+    - name: Reload the site
+      ansible.builtin.command: sleep {{ pace }}
+      changed_when: true
+
+- name: Database
+  hosts: db
+  gather_facts: false
+  tasks:
+    - name: Check the replica lag
+      ansible.builtin.command: sleep {{ pace }}
+      changed_when: false
+
+    - name: Vacuum
+      ansible.builtin.command: sleep {{ pace }}
+      changed_when: true

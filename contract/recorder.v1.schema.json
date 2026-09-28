@@ -1,0 +1,330 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/igouss/ansible-live/contract/recorder.v1.schema.json",
+  "title": "A line the ansible-live recorder writes (contract v1, SPEC.md)",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/run.start"
+    },
+    {
+      "$ref": "#/$defs/playbook.start"
+    },
+    {
+      "$ref": "#/$defs/play.start"
+    },
+    {
+      "$ref": "#/$defs/task.start"
+    },
+    {
+      "$ref": "#/$defs/host.start"
+    },
+    {
+      "$ref": "#/$defs/host.result"
+    },
+    {
+      "$ref": "#/$defs/playbook.end"
+    },
+    {
+      "$ref": "#/$defs/run.end"
+    }
+  ],
+  "$defs": {
+    "run": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z-[0-9]+$"
+    },
+    "at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "host": {
+      "type": "string",
+      "minLength": 1
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "envelope": {
+      "type": "object",
+      "properties": {
+        "v": {
+          "const": 1
+        },
+        "run": {
+          "$ref": "#/$defs/run"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "at": {
+          "$ref": "#/$defs/at"
+        }
+      },
+      "required": [
+        "v",
+        "run",
+        "seq",
+        "at",
+        "type"
+      ]
+    },
+    "run.start": {
+      "$ref": "#/$defs/envelope",
+      "properties": {
+        "type": {
+          "const": "run.start"
+        },
+        "pid": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "controller": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ansible": {
+          "type": "string",
+          "minLength": 1
+        },
+        "check": {
+          "type": "boolean"
+        },
+        "limit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "extra_vars": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "pid",
+        "controller",
+        "ansible",
+        "check",
+        "limit",
+        "extra_vars"
+      ],
+      "unevaluatedProperties": false
+    },
+    "playbook.start": {
+      "$ref": "#/$defs/envelope",
+      "properties": {
+        "type": {
+          "const": "playbook.start"
+        },
+        "playbook": {
+          "type": "string",
+          "pattern": "^/"
+        }
+      },
+      "required": [
+        "playbook"
+      ],
+      "unevaluatedProperties": false
+    },
+    "play.start": {
+      "$ref": "#/$defs/envelope",
+      "properties": {
+        "type": {
+          "const": "play.start"
+        },
+        "play": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/host"
+          }
+        }
+      },
+      "required": [
+        "play",
+        "name",
+        "hosts"
+      ],
+      "unevaluatedProperties": false
+    },
+    "task.start": {
+      "$ref": "#/$defs/envelope",
+      "properties": {
+        "type": {
+          "const": "task.start"
+        },
+        "task": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "play": {
+          "$ref": "#/$defs/id"
+        },
+        "handler": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "task",
+        "name",
+        "play",
+        "handler"
+      ],
+      "unevaluatedProperties": false
+    },
+    "host.start": {
+      "$ref": "#/$defs/envelope",
+      "properties": {
+        "type": {
+          "const": "host.start"
+        },
+        "task": {
+          "$ref": "#/$defs/id"
+        },
+        "host": {
+          "$ref": "#/$defs/host"
+        }
+      },
+      "required": [
+        "task",
+        "host"
+      ],
+      "unevaluatedProperties": false
+    },
+    "host.result": {
+      "$ref": "#/$defs/envelope",
+      "properties": {
+        "type": {
+          "const": "host.result"
+        },
+        "task": {
+          "$ref": "#/$defs/id"
+        },
+        "host": {
+          "$ref": "#/$defs/host"
+        },
+        "outcome": {
+          "enum": [
+            "ok",
+            "failed",
+            "ignored",
+            "skipped",
+            "unreachable"
+          ]
+        },
+        "changed": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4000
+        }
+      },
+      "required": [
+        "task",
+        "host",
+        "outcome",
+        "changed",
+        "message"
+      ],
+      "unevaluatedProperties": false
+    },
+    "playbook.end": {
+      "$ref": "#/$defs/envelope",
+      "properties": {
+        "type": {
+          "const": "playbook.end"
+        },
+        "outcome": {
+          "enum": [
+            "ok",
+            "failed"
+          ]
+        },
+        "hosts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "ok": {
+                "$ref": "#/$defs/count"
+              },
+              "changed": {
+                "$ref": "#/$defs/count"
+              },
+              "failed": {
+                "$ref": "#/$defs/count"
+              },
+              "unreachable": {
+                "$ref": "#/$defs/count"
+              },
+              "skipped": {
+                "$ref": "#/$defs/count"
+              },
+              "rescued": {
+                "$ref": "#/$defs/count"
+              },
+              "ignored": {
+                "$ref": "#/$defs/count"
+              }
+            },
+            "required": [
+              "ok",
+              "changed",
+              "failed",
+              "unreachable",
+              "skipped",
+              "rescued",
+              "ignored"
+            ]
+          }
+        }
+      },
+      "required": [
+        "outcome",
+        "hosts"
+      ],
+      "unevaluatedProperties": false
+    },
+    "run.end": {
+      "$ref": "#/$defs/envelope",
+      "properties": {
+        "type": {
+          "const": "run.end"
+        },
+        "outcome": {
+          "enum": [
+            "ok",
+            "failed",
+            "interrupted"
+          ]
+        }
+      },
+      "required": [
+        "outcome"
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

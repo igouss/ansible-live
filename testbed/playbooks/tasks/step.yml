@@ -1,0 +1,3 @@
+- name: "Step {{ step }}"
+  ansible.builtin.command: sleep {{ pace }}
+  changed_when: step | int % 5 == 0

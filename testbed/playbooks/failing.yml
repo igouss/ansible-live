@@ -1,0 +1,33 @@
+# One host fails and drops out, one failure is ignored, one is rescued; the run fails.
+- name: Web tier, badly
+  hosts: web
+  gather_facts: false
+  tasks:
+    - name: Deploy the release
+      ansible.builtin.command: sleep {{ pace }}
+      changed_when: true
+
+    - name: Health check
+      ansible.builtin.fail:
+        msg: "{{ inventory_hostname }} answered 503 on /healthz"
+      when: inventory_hostname == 'web2'
+
+    - name: Purge a cache that may not exist
+      ansible.builtin.command: "false"
+      changed_when: false
+      ignore_errors: true
+
+    - name: Rotate the certificate
+      block:
+        - name: Fetch the new certificate
+          ansible.builtin.fail:
+            msg: the CA refused the request
+          when: inventory_hostname == 'web3'
+      rescue:
+        - name: Keep the old certificate
+          ansible.builtin.command: sleep {{ pace }}
+          changed_when: false
+
+    - name: Announce the release
+      ansible.builtin.command: sleep {{ pace }}
+      changed_when: false
