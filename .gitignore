@@ -1,3 +1,6 @@
 .venv/
 __pycache__/
 testbed/.state/
+mutants/
+.hypothesis/
+.pytest_cache/

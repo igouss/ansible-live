@@ -4,20 +4,12 @@ import json
 import pathlib
 from typing import Any
 
-import jsonschema
 import pytest
-import referencing
 
 import check
+from schemas import CONTRACT, RECORDER, STREAM
 
-CONTRACT: pathlib.Path = pathlib.Path(__file__).resolve().parents[1]
 EXAMPLES: pathlib.Path = CONTRACT / "examples"
-RECORDER_SCHEMA: dict[str, Any] = json.loads((CONTRACT / "recorder.v1.schema.json").read_text())
-STREAM_SCHEMA: dict[str, Any] = json.loads((CONTRACT / "stream.v1.schema.json").read_text())
-REGISTRY: referencing.Registry = referencing.Registry().with_resource(
-    RECORDER_SCHEMA["$id"], referencing.Resource.from_contents(RECORDER_SCHEMA))
-RECORDER: jsonschema.Draft202012Validator = jsonschema.Draft202012Validator(RECORDER_SCHEMA, registry=REGISTRY)
-STREAM: jsonschema.Draft202012Validator = jsonschema.Draft202012Validator(STREAM_SCHEMA, registry=REGISTRY)
 
 LOGS: dict[str, tuple[bool, set[str]]] = {
     "valid/clean.jsonl": (True, set()),

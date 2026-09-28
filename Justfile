@@ -1,6 +1,15 @@
 # Every check that runs offline: the contract, its model, the testbed.
 verify: test formal testbed
 
+# Mutation testing of the recorder: exactly the mutants mutation-equivalents.txt lists survive.
+mutate:
+    #!/usr/bin/env bash
+    rm -rf mutants
+    uv run --locked mutmut run >/dev/null || exit 1
+    survived=$(uv run --locked mutmut results | awk -F': ' '/survived/ {sub(/^ +/, "", $1); print $1}' | sort)
+    listed=$(grep -v '^#' mutation-equivalents.txt | cut -d' ' -f1 | sort)
+    [ "$survived" = "$listed" ] || { diff <(echo "$listed") <(echo "$survived"); echo "survivors differ from mutation-equivalents.txt"; exit 1; }
+
 # The unit and contract tests.
 test:
     uv run --locked pytest -q
@@ -27,6 +36,8 @@ testbed:
 
 _ends name code *args:
     #!/usr/bin/env bash
-    said=$(just play {{name}} -e pace=0 {{args}} </dev/null 2>&1)
+    logs=$(mktemp -d)
+    said=$(ANSIBLE_LIVE_DIR=$logs just play {{name}} -e pace=0 {{args}} </dev/null 2>&1)
     got=$?
+    rm -rf "$logs"
     [ "$got" = "{{code}}" ] || { echo "$said"; echo "{{name}} {{args}}: exit $got, expected {{code}}"; exit 1; }

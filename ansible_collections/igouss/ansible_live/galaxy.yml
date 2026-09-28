@@ -1,0 +1,13 @@
+namespace: igouss
+name: ansible_live
+version: 0.1.0
+readme: README.md
+authors:
+  - Iouri
+description: Records each ansible-playbook run as it happens, for the ansible-live Claude Code pane.
+license:
+  - MIT
+tags: [callback, monitoring, observability]
+repository: https://github.com/igouss/ansible-live
+build_ignore:
+  - tests

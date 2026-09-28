@@ -22,6 +22,8 @@ pane draws it; loop items, diffs and async polls (not recorded in v1).
 - **FR-1** The recorder SHALL write each run to `<dir>/<run>.jsonl`, where `<dir>` is the
   callback option `dir` (env `ANSIBLE_LIVE_DIR`), defaulting to `$XDG_STATE_HOME/ansible-live`,
   and `$HOME/.local/state/ansible-live` when `XDG_STATE_HOME` is unset.
+- **FR-18** A log SHALL be readable and writable by its owner alone (mode 0600): it holds what
+  tasks said, `stderr` included.
 - **FR-2** A run id SHALL be `<UTC start, YYYYMMDDTHHMMSSZ>-<pid>`, so that runs sort by start in
   name order and two runs started in the same second by different processes do not collide.
 - **FR-3** WHEN a run starts and `<dir>` holds more than `keep` logs (callback option, default
@@ -52,7 +54,8 @@ A run is one `ansible-playbook` process; it may play several playbooks.
 
 - **FR-11** The recorder SHALL NOT record task arguments, result dumps, or extra-var values:
   `extra_vars` holds names only, and a result's `message` is at most 4000 characters of what the
-  task said (its `msg`, else the failed `assertion`, else `stderr`, else `skip_reason`).
+  task said: its `msg`, failed `assertion` and `stderr`, each non-empty one on its own line; else
+  its `skip_reason`; for a loop, what each item said, one item after another.
 
 ## The events
 
@@ -102,6 +105,8 @@ Not modelled: several runs, and pruning (FR-3) deleting a log being followed.
   killed one, and shows it as running.
 - A-3 `keep` counts logs, not bytes; a very long run can make one log large. The follower
   streams, so the viewer never reads a log whole.
+- A-4 FR-18's 0600 is chosen for the operator, not by them: the viewer runs as the same user, and
+  nothing else is known to need the logs.
 
 ## Acceptance
 
@@ -109,7 +114,7 @@ Not modelled: several runs, and pruning (FR-3) deleting a log being followed.
 |---|---|
 | FR-4 schema, FR-5, FR-11 bound | `recorder.v1.schema.json` over `examples/`; recorder tests (bead .2) |
 | FR-6–8, FR-9 as the log states it, FR-17 | `check.py` over `examples/` |
-| FR-1–3, FR-9 on exit, FR-11 content | recorder tests (bead .2) |
+| FR-1–3, FR-9 on exit, FR-11 content, FR-18 | recorder tests (bead .2) |
 | FR-12–14 | `formal/Follow.tla` (the protocol); follower tests (bead .4, the code) |
 | FR-15 | viewer core tests (bead .3) |
 | FR-16 | review of any schema change |

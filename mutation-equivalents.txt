@@ -1,0 +1,4 @@
+# Mutants that change nothing observable; `just mutate` requires exactly these to survive. The first is also the
+# canary: were it ever killed, a test failed for a reason other than the mutant, and the kill count is not trusted.
+# <mutant> <why it is equivalent>
+ansible_collections.igouss.ansible_live.plugins.plugin_utils.log.x_line__mutmut_3 ensure_ascii=None is falsy like False

@@ -7,11 +7,23 @@ requires-python = ">=3.12"
 dependencies = []
 
 [dependency-groups]
-dev = ["ansible-core>=2.21,<2.22", "jsonschema>=4.23", "pytest>=8"]
+dev = [
+    "ansible-core>=2.21,<2.22",
+    "hypothesis>=6",
+    "jsonschema>=4.23",
+    "mutmut>=3.8.0",
+    "pytest>=8",
+]
 
 [tool.uv]
 package = false
 
 [tool.pytest.ini_options]
-testpaths = ["contract/tests"]
-pythonpath = ["contract"]
+testpaths = ["contract/tests", "ansible_collections/igouss/ansible_live/tests"]
+pythonpath = ["contract", "."]
+
+[tool.mutmut]
+source_paths = ["ansible_collections/igouss/ansible_live/plugins/"]
+pytest_add_cli_args = ["--hypothesis-profile=mutation", "--ignore=ansible_collections/igouss/ansible_live/tests/test_runs.py"]
+pytest_add_cli_args_test_selection = ["ansible_collections/igouss/ansible_live/tests/"]
+also_copy = ["contract/", "ansible_collections/igouss/ansible_live/tests/", "ansible_collections/igouss/ansible_live/galaxy.yml", "ansible_collections/igouss/ansible_live/meta/"]

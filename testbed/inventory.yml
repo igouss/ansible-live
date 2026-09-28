@@ -18,4 +18,4 @@ all:
         ghost1:
           ansible_connection: ssh
           ansible_host: 192.0.2.10  # TEST-NET-1 (RFC 5737): nothing answers
-          ansible_ssh_common_args: -o ConnectTimeout=2
+          ansible_timeout: 2
