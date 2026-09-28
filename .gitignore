@@ -4,3 +4,5 @@ testbed/.state/
 mutants/
 .hypothesis/
 .pytest_cache/
+viewer/node_modules/
+viewer/.stryker-tmp/

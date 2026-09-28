@@ -6,9 +6,9 @@ Watch a running `ansible-playbook` from a Claude Code pane. Work in progress: th
 ## Contract
 
 `contract/SPEC.md` is what the recorder writes and the follower streams: requirements FR-1 to
-FR-16, the JSON schemas beside it, witness and near-miss logs in `contract/examples/`, and
+FR-18, the JSON schemas beside it, witness and near-miss logs in `contract/examples/`, and
 `contract/formal/Follow.tla`, a TLA+ model of following a log whose writer can die at any step.
-`just verify` runs every offline check: `just test` (contract and recorder tests), `just formal`
+`just verify` runs every offline check: `just test` (contract, recorder and viewer tests), `just formal`
 (TLC over the model; needs the `tlc` wrapper around tla2tools.jar on `PATH`) and `just testbed`.
 
 ## Recorder
@@ -21,6 +21,19 @@ events without touching Ansible; `plugins/callback/live.py` feeds it.
 
 `just mutate` mutation-tests the recorder with mutmut and fails unless the survivors are exactly
 those `mutation-equivalents.txt` lists, each with why it changes nothing.
+
+## Viewer
+
+`viewer/plugin/` becomes the Claude Code plugin. Its core (`viewer/plugin/core/`) is plain
+TypeScript with no Claude Code API: `decode` reads one stream line, `follow` folds it into the
+stream's runs, and `glance` says where a run is now. A run holds its playbooks, each play batch with
+its host × task grid, per-host counts, the latest failure, and whether it is running, ended or lost;
+a line from a newer recorder marks its run with that version (FR-15). `viewer/tests/` holds unit
+tests and Hegel properties over generated runs.
+
+Once per clone: `cd viewer && npm ci`. `just test` type-checks and runs them; `just mutate-viewer`
+runs Stryker, which fails on any surviving mutant (an equivalent one is argued where it stands, in
+a `// Stryker disable` comment).
 
 ## Testbed
 

@@ -1,8 +1,10 @@
 # Every check that runs offline: the contract, its model, the testbed.
 verify: test formal testbed
 
-# Mutation testing of the recorder: exactly the mutants mutation-equivalents.txt lists survive.
-mutate:
+# Mutation testing: the recorder's survivors are exactly those mutation-equivalents.txt lists; the viewer core has none.
+mutate: mutate-recorder mutate-viewer
+
+mutate-recorder:
     #!/usr/bin/env bash
     rm -rf mutants
     uv run --locked mutmut run >/dev/null || exit 1
@@ -10,9 +12,13 @@ mutate:
     listed=$(grep -v '^#' mutation-equivalents.txt | cut -d' ' -f1 | sort)
     [ "$survived" = "$listed" ] || { diff <(echo "$listed") <(echo "$survived"); echo "survivors differ from mutation-equivalents.txt"; exit 1; }
 
-# The unit and contract tests.
+mutate-viewer:
+    cd viewer && npx stryker run
+
+# The unit and contract tests, the viewer core's type check among them.
 test:
     uv run --locked pytest -q
+    cd viewer && npx tsc -p . && npx vitest run
 
 # The follower protocol model-checked, and the end-first order it replaces seen failing.
 formal:
