@@ -1,7 +1,7 @@
 /** Events of run RUN, spelled short; `at` is the same everywhere except where a test reads it. */
 import type { Event, HostOutcome, PlaybookOutcome, Recap, RunOutcome } from "../plugin/core/event.ts"
 import { list } from "../plugin/core/rows.ts"
-import { begin, fold, type Play, type Run, type Task } from "../plugin/core/run.ts"
+import { begin, cells, fold, type Cell, type Play, type Run, type Task } from "../plugin/core/run.ts"
 import { EMPTY, type Stream } from "../plugin/core/stream.ts"
 
 export const RUN: string = "20260928T142821Z-4242"
@@ -43,9 +43,12 @@ export function lost(at: string): Event {
   return { type: "run.lost", run: RUN, at }
 }
 
+/** A task as the grid reads it: its marks as the cell each host shows. */
+export type Row = Omit<Task, "marks"> & { readonly cells: ReadonlyMap<string, Cell> }
+
 /** A play's rows oldest first, none when there is no such play. */
-export function rowsOf(play: Play | undefined): readonly Task[] {
-  return list(play?.tasks ?? null)
+export function rowsOf(play: Play | undefined): readonly Row[] {
+  return list(play?.tasks ?? null).map((task: Task): Row => ({ id: task.id, name: task.name, handler: task.handler, cells: cells(task) }))
 }
 
 export function folded(...events: readonly Event[]): Run {

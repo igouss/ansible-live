@@ -3,12 +3,12 @@ import type { TestCase } from "@hegeldev/hegel"
 import * as gs from "@hegeldev/hegel/generators"
 import { expect, test } from "vitest"
 import { decode } from "../plugin/core/decode.ts"
-import type { Event } from "../plugin/core/event.ts"
+import type { Event, HostResult, HostStart } from "../plugin/core/event.ts"
 import type { Run } from "../plugin/core/run.ts"
 import { EMPTY, follow, type Stream } from "../plugin/core/stream.ts"
-import { foldedAs, RUN } from "./events.ts"
+import { foldedAs, play, playbook, rowsOf, RUN, runStart, task } from "./events.ts"
 import { read } from "./examples.ts"
-import { anyEvent, aPrefix, aRun, interleaved, spelled } from "./generate.ts"
+import { anyEvent, aPrefix, aRun, hostEvents, interleaved, spelled } from "./generate.ts"
 import * as oracle from "./oracle.ts"
 
 function folded(events: readonly Event[]): Run {
@@ -29,10 +29,17 @@ test("a prefix of a run shows exactly the tasks it started, in order: never a la
     expect(oracle.rows(folded(seen))).toEqual(oracle.taskStarts(seen))
   }))
 
-test("each host's counts equal the results folded", () =>
+test("the run's counts equal the results folded, over all its hosts", () =>
   hegel.test((tc: TestCase) => {
     const seen: readonly Event[] = aPrefix(tc, aRun(tc, RUN))
     expect(folded(seen).counts).toEqual(oracle.counts(seen))
+  }))
+
+test("each host's cell on a task is what the latest event about it on that task said", () =>
+  hegel.test((tc: TestCase) => {
+    const said: readonly (HostStart | HostResult)[] = hostEvents(tc, RUN, "t-1")
+    const run: Run = folded([runStart, playbook("/p.yml"), play("p-1", ["web1", "web2", "db1"]), task("t-1", "p-1"), ...said])
+    expect(rowsOf(run.playbooks[0]?.plays[0])[0]?.cells).toEqual(oracle.cells(said))
   }))
 
 test("the failure shown is the latest failed or unreachable result, named by its task as started then", () =>

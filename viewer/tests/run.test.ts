@@ -1,10 +1,10 @@
 import { expect, test } from "vitest"
-import { begin, NONE, type Run } from "../plugin/core/run.ts"
+import { begin, NONE, type Cell, type Run } from "../plugin/core/run.ts"
 import { AT, folded, rowsOf, hostStart, lost, play, playbook, playbookEnd, result, RUN, runEnd, runStart, task } from "./events.ts"
 
 test("zero events: a run with nothing to show, running", () => {
   expect(begin(RUN)).toEqual({
-    id: RUN, start: null, playbooks: [], counts: new Map(), failure: null, status: { state: "running" }, newer: null,
+    id: RUN, start: null, playbooks: [], counts: NONE, failure: null, status: { state: "running" }, newer: null,
   })
 })
 
@@ -27,6 +27,12 @@ test("one task on one host: running, then its result", () => {
     [{ id: "t-1", name: "task t-1", handler: false, cells: new Map([["web1", { state: "running" }]]) }],
     [{ id: "t-1", name: "task t-1", handler: false, cells: new Map([["web1", { state: "done", outcome: "ok", changed: true }]]) }],
   ])
+})
+
+test("a task's cells are read once: asking again gives the same map, so a redraw reads only the tasks that changed", () => {
+  const run: Run = folded(runStart, playbook("/p.yml"), play("p-1", ["web1"]), task("t-1", "p-1"), hostStart("t-1", "web1"))
+  const first: ReadonlyMap<string, Cell> | undefined = rowsOf(run.playbooks[0]?.plays[0])[0]?.cells
+  expect([first?.get("web1"), rowsOf(run.playbooks[0]?.plays[0])[0]?.cells === first]).toEqual([{ state: "running" }, true])
 })
 
 test("many tasks on many hosts: one row per task in order, one cell per host", () => {
@@ -68,20 +74,14 @@ test("a failure in an earlier serial batch, reported after the next batch starte
   expect(run.failure?.task).toEqual("task t-1")
 })
 
-test("counts: zero hosts have none, and each result counts once for its host", () => {
+test("counts: no result counts nothing, and each result counts once, whichever its host", () => {
   const run: Run = folded(
     runStart, playbook("/p.yml"), play("p-1", ["web1", "web2"]),
     task("t-1", "p-1"), result("t-1", "web1", "ok", true), result("t-1", "web2", "unreachable"),
     task("t-2", "p-1"), result("t-2", "web1", "ignored"), task("t-3", "p-1"), result("t-3", "web1", "skipped"),
     task("t-4", "p-1"), result("t-4", "web1", "failed"),
   )
-  expect([folded(runStart).counts, run.counts]).toEqual([
-    new Map(),
-    new Map([
-      ["web1", { ok: 1, changed: 1, failed: 1, ignored: 1, skipped: 1, unreachable: 0 }],
-      ["web2", { ...NONE, unreachable: 1 }],
-    ]),
-  ])
+  expect([folded(runStart).counts, run.counts]).toEqual([NONE, { ok: 1, changed: 1, failed: 1, ignored: 1, skipped: 1, unreachable: 1 }])
 })
 
 test("the latest failure or unreachable host is the failure shown; an ignored one is not", () => {
@@ -104,9 +104,9 @@ test("serial: each batch is its own play with its own hosts, and a task restarte
     play("p-1", ["web1"]), task("t-1", "p-1"), result("t-1", "web1", "ok"),
     play("p-1", ["web2"]), task("t-1", "p-1"), result("t-1", "web2", "failed"),
   )
-  expect(run.playbooks[0]?.plays).toEqual([
-    { id: "p-1", name: "play p-1", hosts: ["web1"], tasks: { first: { id: "t-1", name: "task t-1", handler: false, cells: new Map([["web1", { state: "done", outcome: "ok", changed: false }]]) }, rest: null } },
-    { id: "p-1", name: "play p-1", hosts: ["web2"], tasks: { first: { id: "t-1", name: "task t-1", handler: false, cells: new Map([["web2", { state: "done", outcome: "failed", changed: false }]]) }, rest: null } },
+  expect(run.playbooks[0]?.plays.map((each) => [each.id, each.name, each.hosts, rowsOf(each)])).toEqual([
+    ["p-1", "play p-1", ["web1"], [{ id: "t-1", name: "task t-1", handler: false, cells: new Map([["web1", { state: "done", outcome: "ok", changed: false }]]) }]],
+    ["p-1", "play p-1", ["web2"], [{ id: "t-1", name: "task t-1", handler: false, cells: new Map([["web2", { state: "done", outcome: "failed", changed: false }]]) }]],
   ])
 })
 
@@ -169,7 +169,7 @@ test("events naming what the run never started change nothing the grid shows", (
 test("a result for a task never started still counts, and its failure has no task name", () => {
   const run: Run = folded(runStart, result("t-9", "web1", "failed", false, "boom"))
   expect([run.counts, run.failure, run.playbooks]).toEqual([
-    new Map([["web1", { ...NONE, failed: 1 }]]),
+    { ...NONE, failed: 1 },
     { host: "web1", task: null, outcome: "failed", message: "boom", at: AT },
     [],
   ])

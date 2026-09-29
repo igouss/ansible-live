@@ -1,7 +1,7 @@
 import type { HostOutcome, RunOutcome } from "./event.ts"
 import { glance, type Glance } from "./glance.ts"
 import { list } from "./rows.ts"
-import type { Cell, Counts, Failure, Play, Run, Status, Task } from "./run.ts"
+import { cells, type Cell, type Counts, type Failure, type Play, type Run, type Status, type Task } from "./run.ts"
 import type { Stream } from "./stream.ts"
 
 /** How a span is drawn: an outcome's color, or plain, dim, bold, or a notice. */
@@ -148,10 +148,11 @@ function board(play: Play, columns: number): Board {
   const tasks: readonly Task[] = list(play.tasks)
   const width: number = Math.min(HOST_COLUMNS, Math.max(0, ...play.hosts.map((host: string) => host.length)))
   const room: number = Math.max(1, columns - width - 1)
+  const drawn: readonly ReadonlyMap<string, Cell>[] = tasks.slice(-room).map(cells)
   return {
     grid: play.hosts.map((host: string): Line => joined([
       { text: `${host.slice(0, width).padEnd(width)} `, tone: "plain" },
-      ...tasks.slice(-room).map((task: Task): Span => cell(task.cells.get(host))),
+      ...drawn.map((row: ReadonlyMap<string, Cell>): Span => cell(row.get(host))),
     ])),
     tasks: tasks.length,
     hidden: Math.max(0, tasks.length - room),
@@ -187,11 +188,9 @@ function joined(spans: Line): Line {
   return line
 }
 
-function totals(counts: ReadonlyMap<string, Counts>, hidden: number): Line | null {
-  const summed: readonly Span[] = TOTALS.flatMap((outcome: HostOutcome | "changed"): Span[] => {
-    const n: number = [...counts.values()].reduce((sum: number, each: Counts) => sum + each[outcome], 0)
-    return n === 0 ? [] : [{ text: `${n} ${outcome}`, tone: outcome }]
-  })
+function totals(counts: Counts, hidden: number): Line | null {
+  const summed: readonly Span[] = TOTALS.flatMap((outcome: HostOutcome | "changed"): Span[] =>
+    counts[outcome] === 0 ? [] : [{ text: `${counts[outcome]} ${outcome}`, tone: outcome }])
   const spans: readonly Span[] = [
     ...summed,
     ...(hidden === 0 ? [] : [{ text: `${hidden} earlier ${hidden === 1 ? "task" : "tasks"} not shown`, tone: "dim" } as const]),

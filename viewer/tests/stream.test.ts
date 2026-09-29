@@ -12,27 +12,27 @@ test("an empty stream has no runs and nothing unreadable", () => {
   expect(EMPTY).toEqual({ runs: new Map(), newer: [], malformed: { lines: 0, latest: null } })
 })
 
-test("clean.jsonl: ended ok, three rows the last a handler, and web1's results counted", () => {
+test("clean.jsonl: ended ok, three rows the last a handler, and its results counted", () => {
   const clean: Run | undefined = run(streamed("valid/clean.jsonl"))
   expect([
     clean?.status.state,
     rowsOf(clean?.playbooks[0]?.plays[0]).map((row) => [row.name, row.handler]),
-    clean?.counts.get("web1"),
+    clean?.counts,
     clean?.failure,
   ]).toEqual([
     "ended",
     [["Write the site config", false], ["Migrate a schema no web host has", false], ["Reload the site", true]],
-    { ...NONE, ok: 2, changed: 2, skipped: 1 },
+    { ...NONE, ok: 4, changed: 4, skipped: 2 },
     null,
   ])
 })
 
-test("failing_then_ok.jsonl: the failure names web2 and its task; the run ended failed", () => {
+test("failing_then_ok.jsonl: the failure names web2 and its task; the run ended failed, its results counted", () => {
   const failing: Run | undefined = run(streamed("valid/failing_then_ok.jsonl"))
-  expect([failing?.status, failing?.failure, failing?.counts.get("web2")]).toEqual([
+  expect([failing?.status, failing?.failure, failing?.counts]).toEqual([
     { state: "ended", outcome: "failed", at: "2026-09-28T14:28:22.200Z" },
     { host: "web2", task: "Health check", outcome: "failed", message: null, at: "2026-09-28T14:28:21.700Z" },
-    { ...NONE, failed: 1 },
+    { ...NONE, ok: 1, failed: 1 },
   ])
 })
 

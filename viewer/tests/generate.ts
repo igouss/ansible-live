@@ -1,7 +1,7 @@
 /** Hegel generators: valid v1 runs (SPEC.md FR-6 to FR-9, FR-17), any events at all, and runs as the contract spells them. */
 import type { TestCase } from "@hegeldev/hegel"
 import * as gs from "@hegeldev/hegel/generators"
-import { HOST_OUTCOMES, PLAYBOOK_OUTCOMES, RUN_OUTCOMES, type Event, type HostOutcome, type PlaybookOutcome, type Recap, type RunOutcome } from "../plugin/core/event.ts"
+import { HOST_OUTCOMES, PLAYBOOK_OUTCOMES, RUN_OUTCOMES, type Event, type HostOutcome, type HostResult, type HostStart, type PlaybookOutcome, type Recap, type RunOutcome } from "../plugin/core/event.ts"
 
 const HOSTS: readonly string[] = ["web1", "web2", "db1"]
 const PLAYS: readonly string[] = ["p-1", "p-2"]
@@ -68,6 +68,18 @@ export function aRun(tc: TestCase, run: string): readonly Event[] {
 /** The first events of a run: what the viewer has seen while it is still going. */
 export function aPrefix(tc: TestCase, events: readonly Event[]): readonly Event[] {
   return events.slice(0, tc.draw(gs.integers({ minValue: 0, maxValue: events.length })))
+}
+
+/** What the hosts said of one task, in any order and any number of times each. */
+export function hostEvents(tc: TestCase, run: string, task: string): readonly (HostStart | HostResult)[] {
+  const said: gs.Generator<HostStart | HostResult> = gs.composite((each: TestCase): HostStart | HostResult => {
+    const host: string = each.draw(gs.sampledFrom(HOSTS))
+    return each.draw(gs.sampledFrom<HostStart | HostResult>([
+      { type: "host.start", run, at: "", task, host },
+      { type: "host.result", run, at: "", task, host, outcome: each.draw(gs.sampledFrom(HOST_OUTCOMES)), changed: each.draw(gs.booleans()), message: null },
+    ]))
+  })
+  return tc.draw(gs.arrays(said, { maxSize: 12 }))
 }
 
 /** Any event of any run, naming plays, tasks and hosts at random: nothing a recorder is bound to write. */

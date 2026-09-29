@@ -1,17 +1,23 @@
 import type { Event, HostOutcome, PlaybookEnd, RunOutcome, RunStart } from "./event.ts"
-import { changed, find, push, type Rows } from "./rows.ts"
+import { changed, find, list, push, type Rows } from "./rows.ts"
 
 /** One host on one task: started, or ended with its result. */
 export type Cell =
   | { readonly state: "running" }
   | { readonly state: "done"; readonly outcome: HostOutcome; readonly changed: boolean }
 
-/** One `task.start`: a task or handler as it ran in one play batch; its cells are the host × task grid's row. */
+/** What one event said of one host on one task. */
+export type Mark = { readonly host: string; readonly cell: Cell }
+
+/**
+ * One `task.start`: a task or handler as it ran in one play batch; its cells are the host × task grid's row.
+ * Its marks, newest first, cost a fold nothing to add to; `cells` reads them.
+ */
 export type Task = {
   readonly id: string
   readonly name: string
   readonly handler: boolean
-  readonly cells: ReadonlyMap<string, Cell>
+  readonly marks: Rows<Mark>
 }
 
 /** One `play.start`: a play, or one `serial` batch of it, with that batch's hosts and its tasks, newest first. */
@@ -28,7 +34,7 @@ export type Playbook = {
   readonly end: Pick<PlaybookEnd, "outcome" | "hosts"> | null
 }
 
-/** A host's results so far, one count per `host.result`; `changed` counts results that changed something. */
+/** The run's results so far, over all its hosts, one count per `host.result`; `changed` counts results that changed something. */
 export type Counts = Readonly<Record<HostOutcome | "changed", number>>
 
 /** The latest result that failed or found its host unreachable; `task` is null when the log never started it. */
@@ -53,7 +59,7 @@ export type Run = {
   /** Null until `run.start` is read. */
   readonly start: Start | null
   readonly playbooks: readonly Playbook[]
-  readonly counts: ReadonlyMap<string, Counts>
+  readonly counts: Counts
   readonly failure: Failure | null
   readonly status: Status
   /** FR-15: the version of a line this reader could not fold, when the run has one. */
@@ -63,7 +69,7 @@ export type Run = {
 export const NONE: Counts = { ok: 0, changed: 0, failed: 0, ignored: 0, skipped: 0, unreachable: 0 }
 
 export function begin(id: string): Run {
-  return { id, start: null, playbooks: [], counts: new Map(), failure: null, status: { state: "running" }, newer: null }
+  return { id, start: null, playbooks: [], counts: NONE, failure: null, status: { state: "running" }, newer: null }
 }
 
 /**
@@ -83,7 +89,7 @@ export function fold(run: Run, event: Event): Run {
       return withLastPlaybook(run, (playbook: Playbook) => ({ ...playbook, plays: [...playbook.plays, play] }))
     }
     case "task.start": {
-      const task: Task = { id: event.task, name: event.name, handler: event.handler, cells: new Map() }
+      const task: Task = { id: event.task, name: event.name, handler: event.handler, marks: null }
       return withPlace(run, latest(run, (play: Play) => play.id === event.play), (play: Play) => ({ ...play, tasks: push(play.tasks, task) }))
     }
     case "host.start":
@@ -93,7 +99,7 @@ export function fold(run: Run, event: Event): Run {
         ? { host: event.host, task: latestTask(run, event.task)?.name ?? null, outcome: event.outcome, message: event.message, at: event.at }
         : run.failure
       const done: Cell = { state: "done", outcome: event.outcome, changed: event.changed }
-      return withTask({ ...run, counts: tally(run.counts, event.host, event.outcome, event.changed), failure }, event.task, (task: Task) => cell(task, event.host, done))
+      return withTask({ ...run, counts: tally(run.counts, event.outcome, event.changed), failure }, event.task, (task: Task) => cell(task, event.host, done))
     }
     case "playbook.end":
       return withLastPlaybook(run, (playbook: Playbook) => ({ ...playbook, end: { outcome: event.outcome, hosts: event.hosts } }))
@@ -104,13 +110,26 @@ export function fold(run: Run, event: Event): Run {
   }
 }
 
-function tally(counts: ReadonlyMap<string, Counts>, host: string, outcome: HostOutcome, isChanged: boolean): ReadonlyMap<string, Counts> {
-  const was: Counts = counts.get(host) ?? NONE
-  return new Map(counts).set(host, { ...was, [outcome]: was[outcome] + 1, changed: was.changed + (isChanged ? 1 : 0) })
+/** Each task's cells once read: a task never changes, so a redraw reads again only the tasks events changed. */
+const READ: WeakMap<Task, ReadonlyMap<string, Cell>> = new WeakMap()
+
+/** Each host's cell on `task`, from its newest mark. */
+export function cells(task: Task): ReadonlyMap<string, Cell> {
+  const known: ReadonlyMap<string, Cell> | undefined = READ.get(task)
+  if (known !== undefined) {
+    return known
+  }
+  const each: ReadonlyMap<string, Cell> = new Map(list(task.marks).map((mark: Mark): readonly [string, Cell] => [mark.host, mark.cell]))
+  READ.set(task, each)
+  return each
+}
+
+function tally(counts: Counts, outcome: HostOutcome, isChanged: boolean): Counts {
+  return { ...counts, [outcome]: counts[outcome] + 1, changed: counts.changed + (isChanged ? 1 : 0) }
 }
 
 function cell(task: Task, host: string, value: Cell): Task {
-  return { ...task, cells: new Map(task.cells).set(host, value) }
+  return { ...task, marks: push(task.marks, { host, cell: value }) }
 }
 
 function withLastPlaybook(run: Run, change: (playbook: Playbook) => Playbook): Run {

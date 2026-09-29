@@ -1,7 +1,7 @@
 /** What a run's events say the viewer must show, worked out from the events alone, never from the fold. */
-import type { Event, HostOutcome, HostResult, RunEnd, RunLost, TaskStart } from "../plugin/core/event.ts"
+import type { Event, HostOutcome, HostResult, HostStart, RunEnd, RunLost, TaskStart } from "../plugin/core/event.ts"
 import { list } from "../plugin/core/rows.ts"
-import type { Counts, Failure, Run, Status } from "../plugin/core/run.ts"
+import type { Cell, Counts, Failure, Run, Status } from "../plugin/core/run.ts"
 import type { Line, Span, View } from "../plugin/core/view.ts"
 
 export function rows(run: Run): readonly string[] {
@@ -12,9 +12,22 @@ export function taskStarts(events: readonly Event[]): readonly string[] {
   return events.flatMap((event: Event) => (event.type === "task.start" ? [event.task] : []))
 }
 
-export function counts(events: readonly Event[]): ReadonlyMap<string, Counts> {
-  const hosts: readonly string[] = [...new Set(results(events).map((event: HostResult) => event.host))]
-  return new Map(hosts.map((host: string) => [host, counted(events, host)]))
+export function counts(events: readonly Event[]): Counts {
+  const all: readonly HostResult[] = results(events)
+  const of = (outcome: HostOutcome): number => all.filter((event: HostResult) => event.outcome === outcome).length
+  return {
+    ok: of("ok"), failed: of("failed"), ignored: of("ignored"), skipped: of("skipped"), unreachable: of("unreachable"),
+    changed: all.filter((event: HostResult) => event.changed).length,
+  }
+}
+
+/** Each host's cell on one task, from the events about that task alone: the latest event about a host is its cell. */
+export function cells(events: readonly (HostStart | HostResult)[]): ReadonlyMap<string, Cell> {
+  const each: Map<string, Cell> = new Map()
+  for (const event of events) {
+    each.set(event.host, event.type === "host.start" ? { state: "running" } : { state: "done", outcome: event.outcome, changed: event.changed })
+  }
+  return each
 }
 
 export function failure(events: readonly Event[]): Failure | null {
@@ -49,15 +62,6 @@ function isFailed(event: HostResult): event is Failed {
 
 function results(events: readonly Event[]): readonly HostResult[] {
   return events.filter((event: Event): event is HostResult => event.type === "host.result")
-}
-
-function counted(events: readonly Event[], host: string): Counts {
-  const mine: readonly HostResult[] = results(events).filter((event: HostResult) => event.host === host)
-  const of = (outcome: HostOutcome): number => mine.filter((event: HostResult) => event.outcome === outcome).length
-  return {
-    ok: of("ok"), failed: of("failed"), ignored: of("ignored"), skipped: of("skipped"), unreachable: of("unreachable"),
-    changed: mine.filter((event: HostResult) => event.changed).length,
-  }
 }
 
 /** How many tasks of the play the grid's rows have a cell for, and how many the totals say are not shown. */

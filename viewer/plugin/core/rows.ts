@@ -1,6 +1,7 @@
 /**
  * A list kept newest first and never changed in place: adding an item, or changing one near the newest,
- * copies only the items newer than it. A play's tasks live here, since hosts report on its latest tasks.
+ * copies only the items newer than it. A play's tasks live here, since hosts report on its latest tasks,
+ * and so do a task's marks.
  */
 export type Rows<T> = { readonly first: T; readonly rest: Rows<T> } | null
 
