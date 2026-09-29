@@ -31,8 +31,12 @@ the latest run.
 
 ![The pane after a run failed](docs/pane-failed.png)
 
-- **Try it from a clone:** `claude --plugin-dir viewer/plugin`, then `/ansible-live`. Any
-  `ansible-playbook` with the callback enabled shows up, started from Claude or any other terminal.
+- **Install from a clone:** the repo is its own plugin marketplace
+  (`.claude-plugin/marketplace.json`):
+  `claude plugin marketplace add <clone>` then `claude plugin install ansible-live@ansible-live`.
+  Then `/ansible-live` in any session. Any `ansible-playbook` with the callback enabled shows up,
+  started from Claude or any other terminal. To try changes without installing:
+  `claude --plugin-dir viewer/plugin`.
 - **What it shows:** the run's state, controller, check mode and limit; the playbook, play and task in
   progress; a row per host with a cell per task (newest last, as many as the pane is wide); the
   results summed; and the latest failure with its message.

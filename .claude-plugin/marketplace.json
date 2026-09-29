@@ -1,0 +1,12 @@
+{
+  "name": "ansible-live",
+  "owner": { "name": "Iouri Goussev" },
+  "description": "Watch a running ansible-playbook from a Claude Code pane.",
+  "plugins": [
+    {
+      "name": "ansible-live",
+      "source": "./viewer/plugin",
+      "description": "A pane that shows the run in progress: the task running, a host × task grid of outcomes, and the latest failure. Needs the Ansible callback igouss.ansible_live.live."
+    }
+  ]
+}
