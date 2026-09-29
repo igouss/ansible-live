@@ -1,0 +1,21 @@
+{
+  "name": "ansible-live",
+  "version": "0.1.0",
+  "description": "Watch a running ansible-playbook from a pane: the task in progress, a host × task grid of outcomes, and the latest failure.",
+  "author": { "name": "Iouri Goussev" },
+  "license": "MIT",
+  "userConfig": {
+    "dir": {
+      "type": "string",
+      "title": "Log directory",
+      "description": "Where the callback igouss.ansible_live.live writes its logs; empty for its default, $XDG_STATE_HOME/ansible-live or ~/.local/state/ansible-live.",
+      "default": ""
+    },
+    "python": {
+      "type": "string",
+      "title": "Python",
+      "description": "The Python 3 that runs the follower.",
+      "default": "python3"
+    }
+  }
+}

@@ -13,20 +13,30 @@ export const EMPTY: Stream = { runs: new Map(), newer: [], malformed: { lines: 0
 
 /** The stream after one more line; runs interleave, and each folds only its own events. */
 export function follow(stream: Stream, line: Line): Stream {
-  switch (line.kind) {
-    case "event":
-      return withRun(stream, line.event.run, (run: Run) => fold(run, line.event))
-    case "newer":
-      return line.run === null
-        ? { ...stream, newer: stream.newer.includes(line.v) ? stream.newer : [...stream.newer, line.v] }
-        : withRun(stream, line.run, (run: Run) => ({ ...run, newer: line.v }))
-    case "unknown":
-      return stream
-    case "malformed":
-      return { ...stream, malformed: { lines: stream.malformed.lines + 1, latest: line.why } }
-  }
+  return followAll(stream, [line])
 }
 
-function withRun(stream: Stream, id: string, change: (run: Run) => Run): Stream {
-  return { ...stream, runs: new Map(stream.runs).set(id, change(stream.runs.get(id) ?? begin(id))) }
+/** The stream after `lines`, as `follow` would have it line by line, with one copy of the runs for all of them. */
+export function followAll(stream: Stream, lines: readonly Line[]): Stream {
+  const runs: Map<string, Run> = new Map(stream.runs)
+  return lines.reduce((now: Stream, line: Line) => take(now, runs, line), { ...stream, runs })
+}
+
+/** `now` after `line`; the runs it changes are changed in `runs`, which `now` holds and nothing else sees yet. */
+function take(now: Stream, runs: Map<string, Run>, line: Line): Stream {
+  switch (line.kind) {
+    case "event":
+      runs.set(line.event.run, fold(runs.get(line.event.run) ?? begin(line.event.run), line.event))
+      return now
+    case "newer":
+      if (line.run === null) {
+        return { ...now, newer: now.newer.includes(line.v) ? now.newer : [...now.newer, line.v] }
+      }
+      runs.set(line.run, { ...(runs.get(line.run) ?? begin(line.run)), newer: line.v })
+      return now
+    case "unknown":
+      return now
+    case "malformed":
+      return { ...now, malformed: { lines: now.malformed.lines + 1, latest: line.why } }
+  }
 }

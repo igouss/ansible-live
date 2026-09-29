@@ -2,6 +2,7 @@
 import type { Event, HostOutcome, PlaybookOutcome, Recap, RunOutcome } from "../plugin/core/event.ts"
 import { list } from "../plugin/core/rows.ts"
 import { begin, fold, type Play, type Run, type Task } from "../plugin/core/run.ts"
+import { EMPTY, type Stream } from "../plugin/core/stream.ts"
 
 export const RUN: string = "20260928T142821Z-4242"
 export const AT: string = "2026-09-28T14:28:21.000Z"
@@ -53,4 +54,9 @@ export function folded(...events: readonly Event[]): Run {
 
 export function foldedAs(run: string, events: readonly Event[]): Run {
   return events.reduce(fold, begin(run))
+}
+
+/** A stream that has shown these runs and nothing else. */
+export function streamOf(...shown: readonly Run[]): Stream {
+  return { ...EMPTY, runs: new Map(shown.map((run: Run) => [run.id, run])) }
 }

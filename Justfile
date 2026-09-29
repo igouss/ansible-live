@@ -1,10 +1,11 @@
-# Every check that runs offline: the contract, its model, the testbed.
-verify: test formal testbed
+# Every check that runs offline: the contract, its model, the pane, the testbed.
+verify: test formal pane testbed
 
-# Mutation testing: the recorder's survivors are exactly those mutation-equivalents.txt lists; the viewer core has none.
-mutate: mutate-recorder mutate-viewer
+# Mutation testing: the Python's survivors (recorder, follower) are exactly those mutation-equivalents.txt lists;
+# the viewer's TypeScript (core, watch) has none.
+mutate: mutate-python mutate-viewer
 
-mutate-recorder:
+mutate-python:
     #!/usr/bin/env bash
     rm -rf mutants
     uv run --locked mutmut run >/dev/null || exit 1
@@ -15,10 +16,15 @@ mutate-recorder:
 mutate-viewer:
     cd viewer && npx stryker run
 
-# The unit and contract tests, the viewer core's type check among them.
+# The unit and contract tests, the viewer's type checks among them.
 test:
     uv run --locked pytest -q
-    cd viewer && npx tsc -p . && npx vitest run
+    cd viewer && npx tsc -p . && npx tsc -p tsconfig.plugin.json && npx vitest run
+
+# The Claude Code plugin as the engine reads it, and its pane drawn on the terminal and desktop surfaces.
+pane:
+    claude plugin validate --strict viewer/plugin
+    claude plugin test viewer/plugin
 
 # The follower protocol model-checked, and the end-first order it replaces seen failing.
 formal:

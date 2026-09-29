@@ -19,11 +19,11 @@ dev = [
 package = false
 
 [tool.pytest.ini_options]
-testpaths = ["contract/tests", "ansible_collections/igouss/ansible_live/tests"]
+testpaths = ["contract/tests", "ansible_collections/igouss/ansible_live/tests", "viewer/tests/follower"]
 pythonpath = ["contract", "."]
 
 [tool.mutmut]
-source_paths = ["ansible_collections/igouss/ansible_live/plugins/"]
-pytest_add_cli_args = ["--hypothesis-profile=mutation", "--ignore=ansible_collections/igouss/ansible_live/tests/test_runs.py"]
-pytest_add_cli_args_test_selection = ["ansible_collections/igouss/ansible_live/tests/"]
-also_copy = ["contract/", "ansible_collections/igouss/ansible_live/tests/", "ansible_collections/igouss/ansible_live/galaxy.yml", "ansible_collections/igouss/ansible_live/meta/"]
+source_paths = ["ansible_collections/igouss/ansible_live/plugins/", "viewer/plugin/follower/"]
+pytest_add_cli_args = ["--hypothesis-profile=mutation", "--ignore=ansible_collections/igouss/ansible_live/tests/test_runs.py", "--ignore=viewer/tests/follower/test_process.py"]
+pytest_add_cli_args_test_selection = ["ansible_collections/igouss/ansible_live/tests/", "viewer/tests/follower/"]
+also_copy = ["conftest.py", "contract/", "viewer/tests/follower/", "ansible_collections/igouss/ansible_live/tests/", "ansible_collections/igouss/ansible_live/galaxy.yml", "ansible_collections/igouss/ansible_live/meta/"]

@@ -6,3 +6,7 @@ mutants/
 .pytest_cache/
 viewer/node_modules/
 viewer/.stryker-tmp/
+viewer/.hegel/
+# Written by Claude Code when it loads the plugin: editor typings.
+viewer/plugin/tsconfig.json
+viewer/plugin/.claude-plugin/types/
