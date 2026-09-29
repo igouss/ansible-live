@@ -77,8 +77,9 @@ A run is one `ansible-playbook` process; it may play several playbooks.
 
 - **FR-12** The follower SHALL emit each line of the logs it follows unchanged, one per line, and
   each line once, in `seq` order within its run; runs may interleave.
-- **FR-13** The follower SHALL follow every run whose log has no `run.end`, the newest run, and
-  every run that starts while it follows; a partly written last line is held until its `\n`.
+- **FR-13** The follower SHALL follow every run whose log has no `run.end`, the newest run, each
+  run it is started with, and every run that starts while it follows; a partly written last line is
+  held until its `\n`.
 - **FR-14** WHEN a followed run's `controller` is this host, its `pid` is not alive, and its log
   has no `run.end`, the follower SHALL emit
   `{"v":1,"type":"run.lost","run":<id>,"at":<now>}` once for that run. It SHALL decide only after
