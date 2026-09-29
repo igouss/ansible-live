@@ -16,7 +16,7 @@ ansible-galaxy collection install ./ansible_collections/igouss/ansible_live
 claude plugin marketplace add . && claude plugin install ansible-live@ansible-live
 ```
 
-> **Status:** pre-release. It works from a clone today; nothing is published to GitHub or Galaxy yet.
+> **Status:** pre-release (0.1.0). Install from GitHub or a clone; not on Ansible Galaxy yet.
 
 ---
 
@@ -130,7 +130,7 @@ claude plugin marketplace add "$PWD"
 claude plugin install ansible-live@ansible-live
 ```
 
-### From GitHub (once published)
+### From GitHub
 
 ```bash
 ansible-galaxy collection install "git+https://github.com/igouss/ansible-live.git#/ansible_collections/igouss/ansible_live/"
@@ -264,7 +264,7 @@ The pane, in Claude Code's `/config`:
 - **Claude Code's plugin hooks are early access**; an update can change the API the pane is written
   against (`viewer/types/claude-code.d.ts` records the version).
 - **Tested on Linux (Fedora) only.**
-- **Not published yet**: no Galaxy release, no GitHub repository to install from.
+- **Not on Ansible Galaxy yet**: install the collection from GitHub or a clone.
 
 ## FAQ
 
